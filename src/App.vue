@@ -23,10 +23,12 @@ export default {
     ])
 
     const overlayShown = ref(false)
+    const animationShown = ref(false)
 
     return {
       videos,
-      overlayShown
+      overlayShown,
+      animationShown
     }
   }
 }
@@ -34,10 +36,15 @@ export default {
 
 <template>
   <div class="w-screen h-screen flex flex-col">
-    <div class="flex-none p-4">
+    <div class="flex-none p-4 flex space-x-6 items-center">
       <label>
         <input type="checkbox" v-model="overlayShown">
         Show overlay on videos
+      </label>
+
+      <label>
+        <input type="checkbox" v-model="animationShown">
+        Show animations in overlays
       </label>
     </div>
     <div class="flex-1 grid grid-cols-3 gap-4 p-4">
@@ -60,7 +67,7 @@ export default {
           </div>
 
           <div class="absolute inset-0 flex items-center justify-center">
-            <Animation />
+            <Animation v-if="animationShown" />
           </div>
         </div>
       </div>
