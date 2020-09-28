@@ -12,8 +12,8 @@ export default {
   setup () {
     const videos = ref([
       'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
-      'http://techslides.com/demos/sample-videos/small.mp4',
-      'http://clips.vorwaerts-gmbh.de/VfE_html5.mp4',
+      'https://www.nicolas-hoffmann.net/animations/Cavernae_Terragen2.mp4',
+      'http://github.com/mediaelement/mediaelement-files/blob/master/big_buck_bunny.mp4?raw=true',
       'https://vjs.zencdn.net/v/oceans.mp4',
       'https://d2zihajmogu5jn.cloudfront.net/elephantsdream/ed_hd.mp4',
       'https://storage.googleapis.com/webfundamentals-assets/videos/chrome.webm',
