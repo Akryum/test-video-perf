@@ -1,12 +1,17 @@
 <script>
-import { ref } from 'vue'
-import Animation from './Animation.vue'
+import { computed, ref } from 'vue'
+import OT from '@opentok/client'
+import VideoWrapper from './VideoWrapper.vue'
+import Publisher from './Publisher.vue'
+import Subscriber from './Subscriber.vue'
 
 export default {
   name: 'App',
 
   components: {
-    Animation
+    VideoWrapper,
+    Publisher,
+    Subscriber
   },
 
   setup () {
@@ -22,13 +27,53 @@ export default {
       'https://media.w3.org/2010/05/sintel/trailer.mp4'
     ])
 
+    // Settings
+
+    const webRtcEnabled = ref(false)
     const overlayShown = ref(false)
     const animationShown = ref(false)
 
+    // WebRTC
+
+    function errorHandler (err) {
+      console.error(err)
+      alert(err.message)
+    }
+
+    const streams = ref([])
+
+    const session = OT.initSession(process.env.VUE_APP_API_KEY, process.env.VUE_APP_SESSION_ID)
+    session.connect(process.env.VUE_APP_TOKEN, err => {
+      if (err) {
+        errorHandler(err)
+      }
+    })
+
+    session.on('streamCreated', event => {
+      streams.value.push(event.stream)
+    })
+
+    session.on('streamDestroyed', event => {
+      const idx = streams.value.indexOf(event.stream)
+      if (idx > -1) {
+        streams.value.splice(idx, 1)
+      }
+    })
+
+    // List
+
+    const list = computed(() => webRtcEnabled.value ? [
+      'publisher',
+      ...streams.value
+    ] : videos.value)
+
     return {
-      videos,
+      list,
+      webRtcEnabled,
       overlayShown,
-      animationShown
+      animationShown,
+      errorHandler,
+      session
     }
   }
 }
@@ -37,6 +82,11 @@ export default {
 <template>
   <div class="w-screen h-screen flex flex-col">
     <div class="flex-none p-4 flex space-x-6 items-center">
+      <label>
+        <input type="checkbox" v-model="webRtcEnabled">
+        Use WebRTC
+      </label>
+
       <label>
         <input type="checkbox" v-model="overlayShown">
         Show overlay on videos
@@ -48,29 +98,31 @@ export default {
       </label>
     </div>
     <div class="flex-1 grid grid-cols-3 gap-4 p-4">
-      <div
-        v-for="video of videos"
-        :key="video"
-        class="border border-gray-200 rounded relative"
+      <VideoWrapper
+        v-for="item of list"
+        :key="item"
+        :title="item.id || item"
+        :overlayShown="overlayShown"
+        :animationShown="animationShown"
       >
-        <div class="absolute inset-0">
-          <video autoplay muted loop class="w-full h-full">
-            <source :src="video" />
-          </video>
-        </div>
-
-        <div v-if="overlayShown" class="absolute inset-0 bg-gradient-to-b from-black to-transparent text-white p-4 rounded">
-          <div>{{ video }}</div>
-
-          <div class="absolute inset-0 flex items-center justify-center">
-            <img src="https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/a7/a7752bb87fccfec2a4bfe4d342937ebbadbfbd98_full.jpg" class="w-12 h-12 rounded-full">
-          </div>
-
-          <div class="absolute inset-0 flex items-center justify-center">
-            <Animation v-if="animationShown" />
-          </div>
-        </div>
-      </div>
+        <template v-if="webRtcEnabled">
+          <Publisher
+            v-if="item === 'publisher'"
+            :session="session"
+            :opts="{
+              mirror: true
+            }"
+          />
+          <Subscriber
+            v-else
+            :stream="item"
+            :session="session"
+          />
+        </template>
+        <video v-else autoplay muted loop class="w-full h-full">
+          <source :src="item" />
+        </video>
+      </VideoWrapper>
     </div>
   </div>
 </template>
